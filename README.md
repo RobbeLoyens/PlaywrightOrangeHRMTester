@@ -21,10 +21,15 @@ A TypeScript and Playwright Test starter framework for the OrangeHRM demo applic
 │   └── users.ts             # Named, reusable demo-user data
 ├── tests/
 │   ├── login.spec.ts        # Login scenarios and user-facing assertions
+│   ├── employee-management.spec.ts # Employee lifecycle and validation
+│   ├── recruitment.spec.ts  # Vacancy lifecycle and search
+│   ├── recruitment-candidates.spec.ts # Candidate lifecycle and validation
+│   ├── recruitment-hiring.spec.ts # Two-candidate hiring workflow
 │   └── smoke.spec.ts        # Post-deployment smoke checks
 ├── utils/
 │   ├── authState.ts         # Shared path for generated admin storage state
 │   ├── regex.ts             # Escapes dynamic strings used in URL assertions
+│   ├── recruitment.ts       # Shared recruitment test helpers
 │   └── routes.ts            # Central application route constants
 ├── .env.example             # Local configuration template (safe to commit)
 ├── .gitignore
@@ -63,6 +68,27 @@ npm run typecheck
 The default run executes the suite in Chromium, Firefox, and WebKit. Tests within each browser project share one page and browser context so the headed run can be recorded as a continuous session; they run serially, and the browser closes when that project's tests finish. CI retries failures twice. HTML reports are written to `playwright-report/`; `test-results/` stores failure artifacts.
 
 For a single continuous recording in Chromium, run `npm run test:headed -- --project=chromium`.
+
+Run the recruitment workflow with `npx playwright test tests/recruitment.spec.ts --project=chromium`.
+It creates and deletes a uniquely named vacancy, and requires the seeded Software Engineer
+job title and `manda akhil user` hiring manager. Skills are stored in the vacancy description
+because the vacancy form has no separate skills field. The test disables public posting and
+attempts cleanup even if a later step fails.
+
+Run the candidate scenarios with `npx playwright test tests/recruitment-candidates.spec.ts --project=chromium`.
+They create uniquely identified candidates, upload and download a text resume, search and
+delete records, and check required fields, email, name characters, file types and the 1 MB
+resume limit. Cleanup searches by a unique keyword, including when a name is corrupted.
+The emoji-name preservation test currently fails against the demo: it stores the emoji as `?`.
+
+Run the end-to-end hiring workflow with
+`npx playwright test tests/recruitment-hiring.spec.ts --project=chromium`.
+It creates its own vacancy, creates and verifies one candidate via the API, and adds another
+through the UI. It rejects the API-created candidate and shortlists, interviews, offers and
+hires the other. It verifies the new PIM employee and cleans up the employee,
+candidates, vacancy and temporary hiring manager via the API, verifying identities before
+deletion. It requires the seeded Software Engineer job title and uses the temporary manager
+as interviewer. The UI workflow expects the application language to remain English.
 
 ## Smoke-test strategy
 
