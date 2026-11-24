@@ -25,6 +25,7 @@ A TypeScript and Playwright Test starter framework for the OrangeHRM demo applic
 │   ├── recruitment.spec.ts  # Vacancy lifecycle and search
 │   ├── recruitment-candidates.spec.ts # Candidate lifecycle and validation
 │   ├── recruitment-hiring.spec.ts # Two-candidate hiring workflow
+│   ├── leave-management.spec.ts # Leave lifecycle, negative and edge scenarios
 │   └── smoke.spec.ts        # Post-deployment smoke checks
 ├── utils/
 │   ├── authState.ts         # Shared path for generated admin storage state
@@ -89,6 +90,27 @@ hires the other. It verifies the new PIM employee and cleans up the employee,
 candidates, vacancy and temporary hiring manager via the API, verifying identities before
 deletion. It requires the seeded Software Engineer job title and uses the temporary manager
 as interviewer. The UI workflow expects the application language to remain English.
+
+Run leave management with `npx playwright test leave-management.spec.ts --project=chromium`.
+This mutating suite is intended for a disposable test instance, not production. It creates
+unique employee and supervisor accounts and a unique Annual Leave type, assigns 20 days,
+applies for and approves three working days, and verifies the 17-day balance. Separate
+negative tests exercise entitlement validation (including non-numeric values through the form
+and API), invalid dates, an empty supervisor search,
+unauthorized approval, pending status and balance restoration after cancellation. Edge tests
+cover fractional entitlements, single-day and half-day requests, repeat approval, mixed
+statuses for the same leave type, and half-day balance calculations. Run just the edge
+tests with `npx playwright test leave-management.spec.ts --project=chromium --grep=edge`.
+The suite uses the configured administrator and creates temporary ESS accounts because no dedicated
+employee or manager credentials are configured by this framework.
+
+The suite requires an English UI, an administrator with user, employee and leave permissions,
+a Direct reporting method, and three consecutive full workdays without holidays remaining
+in the current leave period. It deletes the temporary users and employees and deletes the
+leave type through OrangeHRM's API, which marks types as deleted rather than purging them.
+Cleanup failures are reported; interrupted runs may require manual cleanup. The demo displays
+approved future leave as **Scheduled**. Audit-trail verification is explicitly marked
+`fixme`: no audit-trail screen or API was identified on the inspected demo.
 
 ## Smoke-test strategy
 
